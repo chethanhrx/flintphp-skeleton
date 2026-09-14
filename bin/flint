@@ -1,0 +1,53 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * FlintPHP Project Console Launcher.
+ *
+ * This launcher forwards execution to the framework's CLI implementation.
+ * It is deliberately thin and avoids re-implementing framework logic.
+ */
+
+if (!file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    fwrite(STDERR, "FlintPHP console requires a Composer autoload file.\n");
+    fwrite(STDERR, "Run `composer install` in your project first.\n");
+    exit(1);
+}
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use FlintPHP\Framework\Console\ConsoleApplication;
+use FlintPHP\Framework\Console\ConsoleOutput;
+use FlintPHP\Framework\Console\ParsedInput;
+
+/*
+|--------------------------------------------------------------------------
+| Boot The Application
+|--------------------------------------------------------------------------
+|
+| The console requires the application to be bootstrapped so that bindings,
+| configuration, and registered commands are available.
+|
+*/
+
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$app->boot();
+
+/*
+|--------------------------------------------------------------------------
+| Run The Console Application
+|--------------------------------------------------------------------------
+|
+| We instantiate the framework's console application and execute it with
+| the provided input and output.
+|
+*/
+
+$console = new ConsoleApplication();
+
+exit($console->run(
+    new ParsedInput($argv),
+    new ConsoleOutput()
+));
