@@ -29,7 +29,7 @@ final class StaticTokenUserProvider implements UserProviderInterface
         }
 
         return new class implements IdentityInterface {
-            public function id(): string|int
+            public function getIdentifier(): string|int
             {
                 return 'demo-user';
             }
