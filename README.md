@@ -1,6 +1,6 @@
 # FlintPHP Application Skeleton
 
-Official starter for [FlintPHP](https://github.com/chethanhrx/flintphp).
+Official starter for [FlintPHP](https://github.com/chethanhrx/flintphp) **^1.1**.
 
 Explicit composition. No facades. No automatic discovery.
 
@@ -9,56 +9,50 @@ Explicit composition. No facades. No automatic discovery.
 ```bash
 composer create-project flintphp/skeleton my-app
 cd my-app
+composer update flintphp/framework
+php -S localhost:8000 -t public/
 ```
 
-> Note: skeleton tracks `flintphp/framework:^1.0`. For latest `main` features
-> (`PhpFileLoader`, `setExceptionHandler`, `Response::error`), require
-> `dev-main` or wait for the next tagged release.
-
-## Run
+If Packagist has not published 1.1.0 yet:
 
 ```bash
-php -S localhost:8000 -t public/
+composer require flintphp/framework:dev-main
 ```
 
 ## Sample API
 
 ```bash
-# Status
 curl -s http://localhost:8000/api/status
 
-# List users
-curl -s http://localhost:8000/api/users
-
-# Create user
 curl -s -X POST http://localhost:8000/api/users \
   -H 'Content-Type: application/json' \
   -d '{"name":"Ada","email":"ada@example.com"}'
 
-# Show user
-curl -s http://localhost:8000/api/users/1
+curl -s http://localhost:8000/api/users
 
-# Delete user (requires Bearer token)
 curl -s -X DELETE http://localhost:8000/api/users/1 \
   -H 'Authorization: Bearer flint-demo-token'
 ```
 
-Demo token: `flint-demo-token` (see `StaticTokenUserProvider`).
+Demo token: `flint-demo-token`
+
+## What's included
+
+- JSON exception handling
+- SQLite users table (auto-created in `storage/`)
+- Validation on `POST /api/users`
+- Bearer auth on `DELETE /api/users/{id}`
+- Explicit `config/app.php` + `config/database.php`
 
 ## Structure
 
 | Path | Role |
 |------|------|
-| `public/index.php` | HTTP entrypoint |
-| `bootstrap/app.php` | Application, bootstrappers, routes |
-| `config/*.php` | Explicit PHP config arrays |
-| `src/Http/UserController.php` | Sample API controller |
-| `src/Auth/` | Demo bearer token provider |
-| `storage/` | SQLite DB file |
-| `bin/flint` | CLI launcher |
-
-## Philosophy
-
-FlintPHP favors explicit wiring over magic. Keep bootstrap readable and dependencies constructor-injected.
+| `public/index.php` | HTTP entry |
+| `bootstrap/app.php` | App, bootstrappers, routes |
+| `config/` | PHP config arrays |
+| `src/Http/UserController.php` | Sample controller |
+| `src/Auth/` | Demo token provider |
+| `storage/` | SQLite database |
 
 Framework: https://github.com/chethanhrx/flintphp

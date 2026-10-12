@@ -17,36 +17,22 @@ use FlintPHP\Framework\Http\Exception\JsonExceptionHandler;
 use FlintPHP\Framework\Http\Request;
 use FlintPHP\Framework\Http\Response;
 use FlintPHP\Framework\Validation\ValidationBootstrapper;
-use FlintPHP\Framework\Validation\Validator;
 
 $basePath = dirname(__DIR__);
 
-/*
-|--------------------------------------------------------------------------
-| Explicit configuration (no auto-discovery)
-|--------------------------------------------------------------------------
-*/
+$storageDir = $basePath . '/storage';
+if (!is_dir($storageDir)) {
+    mkdir($storageDir, 0775, true);
+}
 
 $configData = PhpFileLoader::loadDirectory($basePath . '/config');
 $app = new Application($basePath, new ConfigRepository($configData));
 $app->setExceptionHandler(new JsonExceptionHandler());
 
-/*
-|--------------------------------------------------------------------------
-| Bootstrappers
-|--------------------------------------------------------------------------
-*/
-
 $app->bootstrapWith([
     new DatabaseBootstrapper(),
     new ValidationBootstrapper(),
 ]);
-
-/*
-|--------------------------------------------------------------------------
-| Demo auth: Bearer token "flint-demo-token"
-|--------------------------------------------------------------------------
-*/
 
 $app->container()->singleton(
     UserProviderInterface::class,
@@ -67,12 +53,6 @@ $app->container()->singleton(
     )
 );
 
-/*
-|--------------------------------------------------------------------------
-| Schema (idempotent)
-|--------------------------------------------------------------------------
-*/
-
 /** @var ConnectionInterface $db */
 $db = $app->container()->get(ConnectionInterface::class);
 $db->execute(
@@ -83,12 +63,6 @@ $db->execute(
         created_at TEXT NOT NULL
     )'
 );
-
-/*
-|--------------------------------------------------------------------------
-| Routes
-|--------------------------------------------------------------------------
-*/
 
 $router = $app->router();
 

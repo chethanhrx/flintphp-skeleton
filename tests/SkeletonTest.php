@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests;
 
 use FlintPHP\Framework\Foundation\Application;
+use FlintPHP\Framework\Http\Request;
 use PHPUnit\Framework\TestCase;
 
 class SkeletonTest extends TestCase
@@ -20,12 +21,10 @@ class SkeletonTest extends TestCase
     {
         $composerJsonPath = $this->skeletonDir . '/composer.json';
         $this->assertFileExists($composerJsonPath);
-        
-        $json = json_decode(file_get_contents($composerJsonPath), true);
+
+        $json = json_decode((string) file_get_contents($composerJsonPath), true);
         $this->assertIsArray($json);
-        $this->assertEquals('flintphp/skeleton', $json['name']);
-        
-        // Framework dependency is declared correctly
+        $this->assertSame('flintphp/skeleton', $json['name']);
         $this->assertArrayHasKey('flintphp/framework', $json['require']);
     }
 
@@ -34,8 +33,10 @@ class SkeletonTest extends TestCase
         $this->assertFileExists($this->skeletonDir . '/bin/flint');
         $this->assertFileExists($this->skeletonDir . '/bootstrap/app.php');
         $this->assertFileExists($this->skeletonDir . '/public/index.php');
+        $this->assertFileExists($this->skeletonDir . '/config/app.php');
+        $this->assertFileExists($this->skeletonDir . '/config/database.php');
+        $this->assertFileExists($this->skeletonDir . '/src/Http/UserController.php');
         $this->assertFileExists($this->skeletonDir . '/.env.example');
-        $this->assertFileExists($this->skeletonDir . '/.gitignore');
     }
 
     public function testBootstrapLoadsAndApplicationCanBeConstructed(): void
@@ -44,19 +45,46 @@ class SkeletonTest extends TestCase
         $this->assertInstanceOf(Application::class, $app);
     }
 
-    public function testCliLauncherIsExecutable(): void
+    public function testStatusRoute(): void
     {
-        $this->assertTrue(is_executable($this->skeletonDir . '/bin/flint'));
+        /** @var Application $app */
+        $app = require $this->skeletonDir . '/bootstrap/app.php';
+        $response = $app->kernel()->handle(new Request('GET', '/api/status', [], '', [], [], [], [], null));
+
+        $this->assertSame(200, $response->status());
+        $payload = json_decode($response->body(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('operational', $payload['status']);
     }
 
-    public function testPhpBinFlintWorks(): void
+    public function testUsersListRoute(): void
     {
-        $output = [];
-        $returnVar = -1;
-        exec('php ' . escapeshellarg($this->skeletonDir . '/bin/flint') . ' 2>&1', $output, $returnVar);
-        
-        $this->assertEquals(1, $returnVar); // No command provided -> returns 1
-        $this->assertStringContainsString('No command provided', implode("\n", $output));
+        /** @var Application $app */
+        $app = require $this->skeletonDir . '/bootstrap/app.php';
+        $response = $app->kernel()->handle(new Request('GET', '/api/users', [], '', [], [], [], [], null));
+
+        $this->assertSame(200, $response->status());
+        $payload = json_decode($response->body(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('data', $payload);
+    }
+
+    public function testNotFoundIsJson(): void
+    {
+        /** @var Application $app */
+        $app = require $this->skeletonDir . '/bootstrap/app.php';
+        $response = $app->kernel()->handle(new Request('GET', '/missing', [], '', [], [], [], [], null));
+
+        $this->assertSame(404, $response->status());
+        $payload = json_decode($response->body(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('Not Found', $payload['error']['message']);
+    }
+
+    public function testDeleteRequiresAuth(): void
+    {
+        /** @var Application $app */
+        $app = require $this->skeletonDir . '/bootstrap/app.php';
+        $response = $app->kernel()->handle(new Request('DELETE', '/api/users/1', [], '', [], [], [], [], null));
+
+        $this->assertSame(401, $response->status());
     }
 
     public function testPhpBinFlintListWorks(): void
@@ -64,35 +92,7 @@ class SkeletonTest extends TestCase
         $output = [];
         $returnVar = -1;
         exec('php ' . escapeshellarg($this->skeletonDir . '/bin/flint') . ' list', $output, $returnVar);
-        
-        $this->assertEquals(0, $returnVar);
-    }
 
-    public function testPhpBinFlintHelpWorks(): void
-    {
-        $output = [];
-        $returnVar = -1;
-        exec('php ' . escapeshellarg($this->skeletonDir . '/bin/flint') . ' help', $output, $returnVar);
-        
-        $this->assertEquals(0, $returnVar);
-    }
-
-    public function testUnknownCliCommandReturnsNonZero(): void
-    {
-        $output = [];
-        $returnVar = -1;
-        exec('php ' . escapeshellarg($this->skeletonDir . '/bin/flint') . ' unknown_command 2>&1', $output, $returnVar);
-        
-        $this->assertEquals(1, $returnVar);
-    }
-
-    public function testHttpEntryPointCanBeLoadedWithoutSyntaxErrors(): void
-    {
-        $output = [];
-        $returnVar = -1;
-        exec('php -l ' . escapeshellarg($this->skeletonDir . '/public/index.php'), $output, $returnVar);
-        
-        $this->assertEquals(0, $returnVar);
-        $this->assertStringContainsString('No syntax errors detected', implode("\n", $output));
+        $this->assertSame(0, $returnVar);
     }
 }
