@@ -8,6 +8,7 @@ use FlintPHP\Framework\Database\ConnectionInterface;
 use FlintPHP\Framework\Http\Request;
 use FlintPHP\Framework\Http\Response;
 use FlintPHP\Framework\Validation\Validator;
+use JsonException;
 
 final class UserController
 {
@@ -40,8 +41,9 @@ final class UserController
 
     public function store(Request $request): Response
     {
-        $payload = json_decode($request->body(), true);
-        if (!is_array($payload)) {
+        try {
+            $payload = $request->json();
+        } catch (JsonException | \InvalidArgumentException) {
             return Response::error('JSON body required', 400, 'invalid_json');
         }
 
