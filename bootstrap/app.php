@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use FlintPHP\Framework\Foundation\Application;
+use FlintPHP\Framework\Http\Exception\JsonExceptionHandler;
 use FlintPHP\Framework\Http\Request;
 use FlintPHP\Framework\Http\Response;
 
@@ -16,6 +17,14 @@ use FlintPHP\Framework\Http\Response;
 */
 
 $app = new Application(dirname(__DIR__));
+
+/*
+|--------------------------------------------------------------------------
+| API-friendly exception boundary (must be set before kernel() is used)
+|--------------------------------------------------------------------------
+*/
+
+$app->setExceptionHandler(new JsonExceptionHandler());
 
 /*
 |--------------------------------------------------------------------------
@@ -39,13 +48,5 @@ $router->get('/api/status', static function (Request $request): Response {
         'time' => time(),
     ]);
 });
-
-/*
-| Example of a controlled API error:
-|
-| $router->get('/api/fail', static function (): Response {
-|     return Response::error('Something went wrong', 400, 'bad_request');
-| });
-*/
 
 return $app;
