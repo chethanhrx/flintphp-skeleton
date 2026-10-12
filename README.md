@@ -1,39 +1,61 @@
 # FlintPHP Application Skeleton
 
-This repository contains the official application skeleton for the FlintPHP framework.
+Official starter for [FlintPHP](https://github.com/chethanhrx/flintphp).
 
-> **Note:** This repository is the application starter. The underlying framework code is located at [flintphp/framework](https://github.com/chethanhrx/flintphp).
+Explicit composition. No facades. No automatic discovery.
 
-## Create a FlintPHP application
-
-Create a new FlintPHP project using Composer:
+## Create a project
 
 ```bash
 composer create-project flintphp/skeleton my-app
 cd my-app
-php bin/flint
 ```
 
-## Run the application
-
-You can run the application using PHP's built-in development server:
+## Run
 
 ```bash
 php -S localhost:8000 -t public/
 ```
 
-Then visit `http://localhost:8000` in your browser.
+Open:
+
+- `http://localhost:8000/` → welcome JSON
+- `http://localhost:8000/api/status` → status JSON
 
 ## Structure
 
-- `bin/flint`: The command-line launcher for the application.
-- `bootstrap/app.php`: Bootstraps the application and returns the Application instance.
-- `config/`: Directory for your application's configuration files.
-- `public/index.php`: The HTTP entry point for all web requests.
-- `src/`: Your application source code (PSR-4 autoloaded under the `App\` namespace).
-- `storage/`: Directory for generated files, logs, and other application storage.
-- `tests/`: Directory for your application's test suite.
+| Path | Role |
+|------|------|
+| `public/index.php` | HTTP entrypoint |
+| `bootstrap/app.php` | Application + explicit routes |
+| `config/app.php` | Example config array |
+| `.env.example` | Env template (use `FlintPHP\Framework\Config\Env`) |
+| `src/` | Your `App\` code |
+| `storage/` | Writable storage |
+| `tests/` | PHPUnit tests |
+| `bin/flint` | CLI launcher |
+
+## Add a route
+
+Edit `bootstrap/app.php`:
+
+```php
+$router->get('/hello', function (Request $request): Response {
+    return Response::json(['hello' => 'world']);
+});
+```
+
+## Environment files (explicit)
+
+```php
+use FlintPHP\Framework\Config\Env;
+
+$env = Env::load(__DIR__ . '/../.env');
+// merge into config yourself — nothing is auto-injected
+```
 
 ## Philosophy
 
-FlintPHP uses explicit composition and avoids unnecessary magic or discovery. The application structure remains deliberately minimal and production-oriented, providing a fast, secure, and modern PHP foundation.
+FlintPHP favors explicit wiring over magic. Keep bootstrap readable, dependencies constructor-injected, and production behavior predictable.
+
+Framework docs: https://github.com/chethanhrx/flintphp
