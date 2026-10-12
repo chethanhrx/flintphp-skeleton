@@ -11,51 +11,54 @@ composer create-project flintphp/skeleton my-app
 cd my-app
 ```
 
+> Note: skeleton tracks `flintphp/framework:^1.0`. For latest `main` features
+> (`PhpFileLoader`, `setExceptionHandler`, `Response::error`), require
+> `dev-main` or wait for the next tagged release.
+
 ## Run
 
 ```bash
 php -S localhost:8000 -t public/
 ```
 
-Open:
+## Sample API
 
-- `http://localhost:8000/` → welcome JSON
-- `http://localhost:8000/api/status` → status JSON
+```bash
+# Status
+curl -s http://localhost:8000/api/status
+
+# List users
+curl -s http://localhost:8000/api/users
+
+# Create user
+curl -s -X POST http://localhost:8000/api/users \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Ada","email":"ada@example.com"}'
+
+# Show user
+curl -s http://localhost:8000/api/users/1
+
+# Delete user (requires Bearer token)
+curl -s -X DELETE http://localhost:8000/api/users/1 \
+  -H 'Authorization: Bearer flint-demo-token'
+```
+
+Demo token: `flint-demo-token` (see `StaticTokenUserProvider`).
 
 ## Structure
 
 | Path | Role |
 |------|------|
 | `public/index.php` | HTTP entrypoint |
-| `bootstrap/app.php` | Application + explicit routes |
-| `config/app.php` | Example config array |
-| `.env.example` | Env template (use `FlintPHP\Framework\Config\Env`) |
-| `src/` | Your `App\` code |
-| `storage/` | Writable storage |
-| `tests/` | PHPUnit tests |
+| `bootstrap/app.php` | Application, bootstrappers, routes |
+| `config/*.php` | Explicit PHP config arrays |
+| `src/Http/UserController.php` | Sample API controller |
+| `src/Auth/` | Demo bearer token provider |
+| `storage/` | SQLite DB file |
 | `bin/flint` | CLI launcher |
-
-## Add a route
-
-Edit `bootstrap/app.php`:
-
-```php
-$router->get('/hello', function (Request $request): Response {
-    return Response::json(['hello' => 'world']);
-});
-```
-
-## Environment files (explicit)
-
-```php
-use FlintPHP\Framework\Config\Env;
-
-$env = Env::load(__DIR__ . '/../.env');
-// merge into config yourself — nothing is auto-injected
-```
 
 ## Philosophy
 
-FlintPHP favors explicit wiring over magic. Keep bootstrap readable, dependencies constructor-injected, and production behavior predictable.
+FlintPHP favors explicit wiring over magic. Keep bootstrap readable and dependencies constructor-injected.
 
-Framework docs: https://github.com/chethanhrx/flintphp
+Framework: https://github.com/chethanhrx/flintphp
