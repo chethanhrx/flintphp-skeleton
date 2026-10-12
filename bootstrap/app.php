@@ -13,9 +13,11 @@ use FlintPHP\Framework\Config\PhpFileLoader;
 use FlintPHP\Framework\Database\ConnectionInterface;
 use FlintPHP\Framework\Database\DatabaseBootstrapper;
 use FlintPHP\Framework\Foundation\Application;
+use FlintPHP\Framework\Http\Exception\HttpException;
 use FlintPHP\Framework\Http\Exception\JsonExceptionHandler;
 use FlintPHP\Framework\Http\Request;
 use FlintPHP\Framework\Http\Response;
+use FlintPHP\Framework\Observability\Contract\LoggerInterface;
 use FlintPHP\Framework\Validation\ValidationBootstrapper;
 
 $basePath = dirname(__DIR__);
@@ -27,7 +29,10 @@ if (!is_dir($storageDir)) {
 
 $configData = PhpFileLoader::loadDirectory($basePath . '/config');
 $app = new Application($basePath, new ConfigRepository($configData));
-$app->setExceptionHandler(new JsonExceptionHandler());
+
+/** @var LoggerInterface $logger */
+$logger = $app->container()->get(LoggerInterface::class);
+$app->setExceptionHandler(new JsonExceptionHandler($logger));
 
 $app->bootstrapWith([
     new DatabaseBootstrapper(),

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http;
 
 use FlintPHP\Framework\Database\ConnectionInterface;
+use FlintPHP\Framework\Http\Exception\HttpException;
 use FlintPHP\Framework\Http\Request;
 use FlintPHP\Framework\Http\Response;
 use FlintPHP\Framework\Validation\Validator;
-use JsonException;
 
 final class UserController
 {
@@ -41,11 +41,8 @@ final class UserController
 
     public function store(Request $request): Response
     {
-        try {
-            $payload = $request->json();
-        } catch (JsonException | \InvalidArgumentException) {
-            return Response::error('JSON body required', 400, 'invalid_json');
-        }
+        // Request::json() throws HttpException 400 on invalid JSON
+        $payload = $request->json();
 
         $result = $this->validator->validate($payload, [
             'name' => ['required', 'string', 'min:1', 'max:100'],
