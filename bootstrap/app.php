@@ -13,8 +13,10 @@ use FlintPHP\Framework\Config\PhpFileLoader;
 use FlintPHP\Framework\Database\ConnectionInterface;
 use FlintPHP\Framework\Database\DatabaseBootstrapper;
 use FlintPHP\Framework\Foundation\Application;
-use FlintPHP\Framework\Http\Exception\HttpException;
+use FlintPHP\Framework\Health\HealthChecker;
 use FlintPHP\Framework\Http\Exception\JsonExceptionHandler;
+use FlintPHP\Framework\Http\Middleware\CorsMiddleware;
+use FlintPHP\Framework\Http\Middleware\RequestIdMiddleware;
 use FlintPHP\Framework\Http\Request;
 use FlintPHP\Framework\Http\Response;
 use FlintPHP\Framework\Observability\Contract\LoggerInterface;
@@ -38,6 +40,17 @@ $app->bootstrapWith([
     new DatabaseBootstrapper(),
     new ValidationBootstrapper(),
 ]);
+
+// Production-oriented global middleware (explicit registration)
+$app->container()->singleton(RequestIdMiddleware::class, static fn () => new RequestIdMiddleware());
+$app->container()->singleton(
+    CorsMiddleware::class,
+    static fn () => new CorsMiddleware(
+        allowedOrigins: ['*'], // tighten in production
+    )
+);
+$app->addMiddleware(RequestIdMiddleware::class);
+$app->addMiddleware(CorsMiddleware::class);
 
 $app->container()->singleton(
     UserProviderInterface::class,
@@ -76,6 +89,7 @@ $router->get('/', static function (Request $request): Response {
         'name' => 'FlintPHP',
         'message' => 'Skeleton is running.',
         'endpoints' => [
+            'GET /health',
             'GET /api/status',
             'GET /api/users',
             'POST /api/users',
@@ -85,11 +99,16 @@ $router->get('/', static function (Request $request): Response {
     ]);
 });
 
+$router->get('/health', static function () use ($db): Response {
+    return HealthChecker::withDatabase($db)->toResponse();
+});
+
 $router->get('/api/status', static function (Request $request): Response {
     return Response::json([
         'status' => 'operational',
         'framework' => 'FlintPHP',
         'time' => time(),
+        'request_id' => $request->attribute(\FlintPHP\Framework\Http\Middleware\RequestIdMiddleware::ATTRIBUTE),
     ]);
 });
 
